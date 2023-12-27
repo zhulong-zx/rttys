@@ -344,6 +344,8 @@ export default {
       window.open('/rtty/' + devid);
     },
     connectDeviceWeb(dev) {
+      debugger;
+      console.error("dev:"+JSON.stringify(dev));
       let addr = '127.0.0.1';
 
       this.$Modal.confirm({
@@ -368,7 +370,7 @@ export default {
         },
         onOk: () => {
           let proto = 'http';
-
+          console.error("addr:"+addr)
           if (addr.startsWith('http://'))
             addr = addr.substring(7);
 

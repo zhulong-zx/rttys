@@ -15,6 +15,7 @@ type Config struct {
 	AddrDev           string
 	AddrUser          string
 	AddrHttpProxy     string
+	HttpProxyProtocol string
 	HttpProxyRedirURL string
 	HttpProxyPort     int
 	SslCert           string
@@ -46,6 +47,7 @@ func Parse(c *cli.Context) *Config {
 		AddrDev:           c.String("addr-dev"),
 		AddrUser:          c.String("addr-user"),
 		AddrHttpProxy:     c.String("addr-http-proxy"),
+		HttpProxyProtocol: c.String("http-proxy-protocol"),
 		HttpProxyRedirURL: c.String("http-proxy-redir-url"),
 		SslCert:           c.String("ssl-cert"),
 		SslKey:            c.String("ssl-key"),
@@ -72,6 +74,7 @@ func Parse(c *cli.Context) *Config {
 		getConfigOpt(yamlCfg, "addr-dev", &cfg.AddrDev)
 		getConfigOpt(yamlCfg, "addr-user", &cfg.AddrUser)
 		getConfigOpt(yamlCfg, "addr-http-proxy", &cfg.AddrHttpProxy)
+		getConfigOpt(yamlCfg, "http-proxy-protocol", &cfg.HttpProxyProtocol)
 		getConfigOpt(yamlCfg, "http-proxy-redir-url", &cfg.HttpProxyRedirURL)
 		getConfigOpt(yamlCfg, "ssl-cert", &cfg.SslCert)
 		getConfigOpt(yamlCfg, "ssl-key", &cfg.SslKey)

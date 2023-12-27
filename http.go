@@ -2,18 +2,21 @@ package main
 
 import (
 	"bufio"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"rttys/client"
+	"rttys/utils"
 	"strconv"
 	"sync"
 	"time"
-
-	"rttys/client"
-	"rttys/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -220,12 +223,46 @@ func listenHttpProxy(brk *broker) {
 			cfg.HttpProxyPort = addr.Port
 		}
 	}
+	ln, err := net.Listen("tcp", cfg.AddrHttpProxy)
+
+	if cfg.SslCert != "" && cfg.SslKey != "" {
+		crt, err := tls.LoadX509KeyPair(cfg.SslCert, cfg.SslKey)
+		if err != nil {
+			log.Fatal().Msg(err.Error())
+		}
+
+		tlsConfig := &tls.Config{}
+		tlsConfig.Certificates = []tls.Certificate{crt}
+		tlsConfig.Time = time.Now
+		tlsConfig.Rand = rand.Reader
+		tlsConfig.MinVersion = tls.VersionTLS12
+
+		if cfg.SslCacert == "" {
+			log.Warn().Msgf("mTLS not enabled")
+		} else {
+			caCert, err := ioutil.ReadFile(cfg.SslCacert)
+			if err != nil {
+				log.Error().Msgf("mTLS not enabled: %s", err.Error())
+			} else {
+				brk.devCertPool = x509.NewCertPool()
+				brk.devCertPool.AppendCertsFromPEM(caCert)
+
+				// Create the TLS Config with the CA pool and enable Client certificate validation
+				tlsConfig.ClientCAs = brk.devCertPool
+				tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+			}
+		}
+
+		ln = tls.NewListener(ln, tlsConfig)
+		log.Info().Msgf("Listen http proxy on: %s SSL on", ln.Addr().(*net.TCPAddr))
+	} else {
+		log.Info().Msgf("Listen http proxy on: %s SSL off", ln.Addr().(*net.TCPAddr))
+	}
 
 	if cfg.HttpProxyPort == 0 {
 		log.Info().Msg("Automatically select an available port for http proxy")
 	}
 
-	ln, err := net.Listen("tcp", cfg.AddrHttpProxy)
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
@@ -303,7 +340,12 @@ func httpProxyRedirect(br *broker, c *gin.Context) {
 		if err != nil {
 			host = c.Request.Host
 		}
-		location = "http://" + host
+		if cfg.HttpProxyProtocol != "" {
+			location = cfg.HttpProxyProtocol + "://" + host
+		} else {
+			location = "http://" + host
+		}
+
 		if cfg.HttpProxyPort != 80 {
 			location += fmt.Sprintf(":%d", cfg.HttpProxyPort)
 		}
