@@ -72,7 +72,7 @@ FLUSH PRIVILEGES;
 ./build.sh linux amd64
 
 ## 以服务的方式启动
-
+```
 sudo mv rttys /usr/local/bin/
 
 sudo mkdir /etc/rttys
@@ -84,6 +84,7 @@ sudo cp rttys.conf /etc/rttys/
 sudo systemctl daemon-reload
 sudo systemctl enable rttys
 sudo systemctl start rttys
+```
 
 ## 贡献代码
 如果你想帮助[rttys](https://github.com/zhaojh329/rttys)变得更好，请参考
